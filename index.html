@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STALKER - Калькулятор скупки МЗ</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2a2a2a;
+            --bg-tertiary: #353535;
+            --border-color: #4a4a4a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --text-accent: #ffffff;
+            --accent-color: #6a6a6a;
+            --success-color: #4CAF50;
+            --bonus-color: #FF9800;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 15px;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+        }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: var(--text-accent);
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        /* Main Content */
+        .main-content {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .category-tabs {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .category-tab {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .category-tab:hover {
+            background: var(--accent-color);
+        }
+
+        .category-tab.active {
+            background: var(--accent-color);
+            color: var(--text-accent);
+            font-weight: bold;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 70vh;
+            padding: 5px;
+        }
+
+        .item-card {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .item-card:hover {
+            border-color: var(--accent-color);
+        }
+
+        .item-card.selected {
+            border-color: var(--success-color);
+            background: linear-gradient(135deg, var(--bg-tertiary) 0%, #2a3a2a 100%);
+        }
+
+        .item-image {
+            width: 100%;
+            height: 80px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .item-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .item-name {
+            font-size: 0.85em;
+            margin-bottom: 8px;
+            color: var(--text-accent);
+            height: 36px;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+
+        .item-price {
+            color: var(--success-color);
+            font-weight: bold;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 5px;
+        }
+
+        .quantity-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .quantity-btn:hover {
+            background: var(--accent-color);
+            transform: scale(1.1);
+        }
+
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-accent);
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .total-section {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .total-label {
+            color: var(--text-secondary);
+            font-size: 0.95em;
+            margin-bottom: 8px;
+        }
+
+        .total-amount {
+            font-size: 2.2em;
+            color: var(--success-color);
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .bonus-amount {
+            font-size: 1.5em;
+            color: var(--bonus-color);
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .selected-count {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        .control-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .control-btn {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .control-btn.reset {
+            background: #5a2a2a;
+            border-color: #7a3a3a;
+        }
+
+        .control-btn.reset:hover {
+            background: #7a3a3a;
+        }
+
+        .control-btn.bonus {
+            background: #5a4a2a;
+            border-color: #7a6a3a;
+            color: var(--bonus-color);
+        }
+
+        .control-btn.bonus:hover {
+            background: #7a6a3a;
+        }
+
+        .item-details {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: auto;
+        }
+
+        .detail-title {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .detail-image {
+            width: 100%;
+            height: 120px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .detail-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .detail-name {
+            color: var(--text-accent);
+            font-size: 1em;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .detail-price {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .detail-total {
+            color: var(--success-color);
+            font-size: 0.95em;
+            font-weight: bold;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 5px;
+                gap: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .items-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 8px;
+            }
+
+            .category-tabs {
+                flex-direction: column;
+            }
+
+            .total-amount {
+                font-size: 1.8em;
+            }
+            
+            .quantity-btn {
+                width: 26px;
+                height: 26px;
+            }
+            
+            .quantity-input {
+                width: 45px;
+                font-size: 0.85em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .items-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .item-card {
+                padding: 8px;
+            }
+
+            .item-image {
+                height: 70px;
+            }
+            
+            .quantity-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 0.8em;
+            }
+            
+            .quantity-input {
+                width: 40px;
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>🎯 Калькулятор скупки МЗ</h1>
+        </header>
+
+        <main class="main-content">
+            <div class="category-tabs">
+                <button class="category-tab active" data-category="scrap">Хлам</button>
+		<button class="category-tab" data-category="garbage">Мусор</button>
+		<button class="category-tab" data-category="medicine">Ингридиенты</button>
+                <button class="category-tab" data-category="mutants">Мутанты</button>
+                <button class="category-tab" data-category="documents">Документы</button>
+                <button class="category-tab" data-category="artifacts">Артефакты</button>
+            </div>
+
+            <div id="itemsContainer" class="items-grid">
+                <!-- Items will be loaded here -->
+            </div>
+        </main>
+
+        <aside class="sidebar">
+            <div class="total-section">
+                <div class="total-label">ОБЩАЯ СУММА</div>
+                <div class="total-amount" id="totalSum">0</div>
+                <div class="bonus-amount" id="bonusSum" style="display: none;">+15%: 0</div>
+                <div class="selected-count" id="selectedCount">Выбрано предметов: 0</div>
+            </div>
+
+            <div class="control-buttons">
+                <button class="control-btn reset" onclick="resetAll()">🔄 Сбросить всё</button>
+                <button class="control-btn bonus" onclick="addBonus()">🎁 Добавить 15%</button>
+            </div>
+
+            <div class="item-details">
+                <div class="detail-title">ИНФОРМАЦИЯ О ПРЕДМЕТЕ</div>
+                <div class="detail-image" id="detailImage">
+                    <div style="color: var(--text-secondary); text-align: center; font-size: 0.9em;">Выберите предмет</div>
+                </div>
+                <div class="detail-name" id="detailName">-</div>
+                <div class="detail-price" id="detailPrice">Цена: -</div>
+                <div class="detail-total" id="detailTotal">Сумма: -</div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const itemsDatabase = {
+            scrap: [
+                {name: "Предохранитель", price: 895.0, image: "images/scrap/fuse.png"},
+                {name: "Канифоль", price: 348.0, image: "images/scrap/rosin.jpg"},
+                {name: "Текстолит", price: 372.0, image: "images/scrap/textolit.jpg"},
+                {name: "Старая батарейка", price: 550.0, image: "images/scrap/battery_old.jpg"},
+                {name: "Неисправный дозиметр", price: 667.0, image: "images/scrap/dosimeter.jpg"},
+                {name: "проводка", price: 2300.0, image: "images/scrap/wiring.jpg"},
+                {name: "Изолента", price: 224.0, image: "images/scrap/tape.jpg"},
+                {name: "Транзисторы", price: 1950.0, image: "images/scrap/transistors.jpg"},
+                {name: "Конденсаторы", price: 240.0, image: "images/scrap/capacitors.jpg"},
+                {name: "Резисторы", price: 1750.0, image: "images/scrap/resistors.jpg"},
+                {name: "Инструменты грубой работы", price: 900.0, image: "images/scrap/tools.jpg"},
+                {name: "Комплект расходников", price: 900.0, image: "images/scrap/consumables.jpg"},
+                {name: "Автомобильный аккумулятор", price: 366.0, image: "images/scrap/battery_car.jpg"},
+                {name: "Катушка с медью", price: 1800.0, image: "images/scrap/copper_coil.jpg"},
+                {name: "Клей ультра", price: 138.0, image: "images/scrap/glue_ultra.jpg"},
+                {name: "Полиуретан. клей", price: 98.0, image: "images/scrap/glue_polyurethane.jpg"},
+                {name: "прочная нить", price: 87.0, image: "images/scrap/thread.jpg"},
+                {name: "Сверток кожи", price: 144.0, image: "images/scrap/leather_bundle.jpg"},
+                {name: "Прорезиненная ткань", price: 134.0, image: "images/scrap/rubber_fabric.jpg"},
+                {name: "Армированная ткань", price: 177.0, image: "images/scrap/reinforced_fabric.jpg"},
+                {name: "Ткань изофлекс", price: 134.0, image: "images/scrap/fabric_isoflex.jpg"},
+                {name: "Ткань гидра 225", price: 112.0, image: "images/scrap/fabric_hydra.jpg"},
+                {name: "Ткань из брезента", price: 208.0, image: "images/scrap/fabric_tarpaulin.jpg"},
+                {name: "Клейкая лента - герметик", price: 80.0, image: "images/scrap/tape_sealant.jpg"},
+                {name: "Термостойкая клейкая лента", price: 80.0, image: "images/scrap/tape_heat.jpg"},
+                {name: "Клеевая лента", price: 98.0, image: "images/scrap/tape_glue.jpg"},
+                {name: "Диэлектрическая лента", price: 80.0, image: "images/scrap/tape_dielectric.jpg"},
+                {name: "Разводной ключ", price: 200.0, image: "images/scrap/wrench.png"},
+                {name: "Клещи", price: 200.0, image: "images/scrap/pliers.jpg"},
+                {name: "Молоток", price: 200.0, image: "images/scrap/hammer.jpg"},
+                {name: "Отвертка", price: 200.0, image: "images/scrap/screwdriver.jpg"},
+                {name: "Швейцарский нож", price: 250.0, image: "images/scrap/swiss_knife.png"},
+                {name: "скальпель", price: 200.0, image: "images/scrap/skalpel.jpg"},
+                {name: "мультитул", price: 270.0, image: "images/scrap/multitool.jpg"},
+                {name: "Огнеупорное полотно", price: 180.0, image: "images/scrap/fireproof_cloth.jpg"},
+                {name: "Заводские детали", price: 900.0, image: "images/scrap/facrory_parts.jpg"},
+                {name: "Старая экипировка", price: 1102.0, image: "images/scrap/old_equipment.jpg"},
+                {name: "Мотки паракорда", price: 665.0, image: "images/scrap/paracord.jpg"},
+                {name: "Старые инструменты", price: 380.0, image: "images/scrap/old_tools.jpg"},
+                {name: "Защита 1 класса", price: 640.0, image: "images/scrap/protection_1.jpg"},
+                {name: "Боковая полимерная брониплита", price: 780.0, image: "images/scrap/armor_side_polymer.jpg"},
+                {name: "полимерная брониплита", price: 780.0, image: "images/scrap/armor_polymer.jpg"},
+                {name: "Брониплита 3 класса", price: 1200.0, image: "images/scrap/armor_3.jpg"},
+                {name: "Боковая брониплита 3 класса", price: 1100.0, image: "images/scrap/armor_side_3.jpg"},
+                {name: "Армированная клейкая лента", price: 120.0, image: "images/scrap/tape_reinforced.jpg"},
+                {name: "Особопрочная клейкая лента", price: 140.0, image: "images/scrap/tape_strong.jpg"},
+                {name: "Ткань армотекс", price: 199.0, image: "images/scrap/fabric_armotex.jpg"},
+                {name: "Клей момент", price: 220.0, image: "images/scrap/glue_moment.jpg"},
+                {name: "Нейлоновая нить", price: 221.0, image: "images/scrap/nylon_thread.jpg"},
+                {name: "Платы", price: 4800.0, image: "images/scrap/boards.jpg"},
+                {name: "Электромагниты", price: 3600.0, image: "images/scrap/elecrtomagnets.jpg"}
+            ],
+            mutants: [
+                {name: "Копыто кабана", price: 134.0, image: "images/mutants/boar_hoof.png"},
+                {name: "Клыки кабана", price: 179.0, image: "images/mutants/boar_tusks.png"},
+                {name: "Шкура кабана", price: 72.0, image: "images/mutants/boar_skin.png"},
+                {name: "Нос слепого пса", price: 154.0, image: "images/mutants/blind_dog_nose.png"},
+                {name: "Хвост слепого пса", price: 99.0, image: "images/mutants/blind_dog_tail.png"},
+                {name: "Шкура слепого пса", price: 70.0, image: "images/mutants/blind_dog_skin.png"},
+                {name: "Челюсть псевдособаки", price: 254.0, image: "images/mutants/pseudodog_jaw.png"},
+                {name: "Хвост псевдособаки", price: 155.0, image: "images/mutants/pseudodog_tail.png"},
+                {name: "Шкура псевдособаки", price: 70.0, image: "images/mutants/pseudodog_skin.png"},
+                {name: "Хвост пси-собаки", price: 179.0, image: "images/mutants/psidog_tail.png"},
+                {name: "Мозг пси-собаки", price: 299.0, image: "images/mutants/psidog_brain.png"},
+                {name: "Шкура пси-собаки", price: 76.0, image: "images/mutants/psidog_skin.png"},
+                {name: "Глаз плоти", price: 199.0, image: "images/mutants/flesh_eye.png"},
+                {name: "Клешня плоти", price: 111.0, image: "images/mutants/flesh_claw.png"},
+                {name: "Шкура плоти", price: 66.0, image: "images/mutants/flesh_skin.png"},
+                {name: "Голова тушкана", price: 112.0, image: "images/mutants/tushkano_head.png"},
+                {name: "Хвост тушкана", price: 86.0, image: "images/mutants/tushkano_tail.png"},
+                {name: "Шкура тушкана", price: 40.0, image: "images/mutants/tushkano_skin.png"},
+                {name: "Стопа снорка", price: 399.0, image: "images/mutants/snork_foot.png"},
+                {name: "Рука снорка", price: 220.0, image: "images/mutants/snork_hand.png"},
+                {name: "Хребет снорка", price: 170.0, image: "images/mutants/snork_spine.png"},
+                {name: "Щупальца кровососа", price: 300.0, image: "images/mutants/bloodsucker_tentacles.png"},
+                {name: "Пальцы кровососа", price: 554.0, image: "images/mutants/bloodsucker_fingers.png"},
+                {name: "Шкура кровососа", price: 199.0, image: "images/mutants/bloodsucker_skin.png"},
+                {name: "Печень зомби", price: 278.0, image: "images/mutants/zombie_liver.png"},
+                {name: "Рука зомби", price: 199.0, image: "images/mutants/zombie_hand.png"},
+                {name: "Скальп зомби", price: 80.0, image: "images/mutants/zombie_scalp.png"},
+                {name: "Стопа излома", price: 333.0, image: "images/mutants/fracture_foot.png"},
+                {name: "Рука излома", price: 266.0, image: "images/mutants/fracture_hand.png"},
+                {name: "Кожа излома", price: 98.0, image: "images/mutants/fracture_skin.png"},
+                {name: "Лапа горбуна", price: 375.0, image: "images/mutants/hunchback_paw.png"},
+                {name: "Голова горбуна", price: 250.0, image: "images/mutants/hunchback_head.png"},
+                {name: "Шкура горбуна", price: 108.0, image: "images/mutants/hunchback_skin.png"},
+                {name: "Рука карлика", price: 221.0, image: "images/mutants/dwarf_hand.png"},
+                {name: "Шкура карлика", price: 98.0, image: "images/mutants/dwarf_skin.png"},
+                {name: "Голова карлика", price: 875.0, image: "images/mutants/dwarf_head.png"},
+                {name: "Когти химеры", price: 1512.0, image: "images/mutants/chimera_claws.png"},
+                {name: "Ухо химеры", price: 1918.0, image: "images/mutants/chimera_ear.png"},
+                {name: "Шкура химеры", price: 625.0, image: "images/mutants/chimera_skin.png"},
+                {name: "Глаз псевдо-гиганта", price: 2900.0, image: "images/mutants/pseudogiant_eye.png"},
+                {name: "Лапа псевдогиганта", price: 1978.0, image: "images/mutants/pseudogiant_paw.png"},
+                {name: "Шкура псевдогиганта", price: 900.0, image: "images/mutants/pseudogiant_skin.png"},
+                {name: "Рука бюрера", price: 415.0, image: "images/mutants/burer_hand.png"},
+                {name: "Мозг бюрера", price: 716.0, image: "images/mutants/burer_brain.png"},
+                {name: "Кожа бюрера", price: 198.0, image: "images/mutants/burer_skin.png"},
+                {name: "Хвост кота - баюна", price: 312.0, image: "images/mutants/cat_bayun_tail.png"},
+                {name: "Железа кота - баюна", price: 212.0, image: "images/mutants/cat_bayun_gland.png"},
+                {name: "Шкура кота - баюна", price: 90.0, image: "images/mutants/cat_bayun_skin.png"},
+                {name: "Мозг контроллера", price: 933.0, image: "images/mutants/controller_brain.png"},
+                {name: "Рука контроллера", price: 572.0, image: "images/mutants/controller_hand.png"},
+                {name: "Скальп контроллера", price: 202.0, image: "images/mutants/controller_scalp.png"}
+            ],
+            documents: [
+                {name: "Старая флешка", price: 190.0, image: "images/documents/flash_old.png"},
+                {name: "Потертая флешка", price: 330.0, image: "images/documents/flash_worn.png"},
+                {name: "Утерянный КПК", price: 350.0, image: "images/documents/pda_lost.png"},
+                {name: "Карта ЧЗО 2003г.", price: 444.0, image: "images/documents/map_chzo.png"},
+                {name: "Административные документы", price: 580.0, image: "images/documents/admin_docs.png"},
+                {name: "Письмо о поставках изделия №62", price: 715.0, image: "images/documents/letter_supply.png"},
+                {name: "Документация по изделию №62", price: 2425.0, image: "images/documents/docs_product62.png"},
+                {name: "Документы из припяти", price: 532.0, image: "images/documents/docs_pripyat.png"},
+                {name: "Приказ №562", price: 502.0, image: "images/documents/order_562.png"},
+                {name: "Внутренне распоряжение №423", price: 513.0, image: "images/documents/internal_order.png"},
+                {name: "Бумага с записями", price: 200.0, image: "images/documents/paper_notes.png"},
+                {name: "Инструкция к изделию №62", price: 2718.0, image: "images/documents/instruction_62.png"},
+                {name: "Документы об исследованиях", price: 1486.0, image: "images/documents/research_docs.png"},
+                {name: "Сканер Гродус", price: 1500.0, image: "images/documents/scanner_grodus.png"},
+                {name: "Сканер Брокс", price: 2200.0, image: "images/documents/scanner_brox.png"},
+                {name: "Документы из лаборатории х16", price: 1624.0, image: "images/documents/docs_lab_x16.png"},
+                {name: "График поставок", price: 884.0, image: "images/documents/supply_schedule.png"},
+                {name: "Излучатель Радуга - основные ТТХ", price: 2130.0, image: "images/documents/emitter_rainbow.png"},
+                {name: "Журнал дежурной смены", price: 315.0, image: "images/documents/duty_log.png"},
+                {name: "Документы из Х18", price: 1513.0, image: "images/documents/docs_x18.png"},
+                {name: "Ноутбук", price: 512.0, image: "images/documents/laptop.png"},
+                {name: "Папка с приказом", price: 486.0, image: "images/documents/folder_order.png"},
+                {name: "Распоряжение о переводе", price: 614.0, image: "images/documents/transfer_order.png"},
+                {name: "Доклад об исследовании образцов", price: 1102.0, image: "images/documents/report_samples.png"},
+                {name: "Чертежная бумага", price: 500.0, image: "images/documents/drawing_paper.png"},
+                {name: "Фрагмент типографической карты", price: 1181.0, image: "images/documents/map_fragment.png"},
+                {name: "Тетрадь с записью об эксперементе", price: 2214.0, image: "images/documents/notebook_experiment.png"}
+            ],
+            artifacts: [
+                {name: "Пустышка", price: 980.0, image: "images/artifacts/dummy.png"},
+                {name: "Медуза", price: 6500.0, image: "images/artifacts/jellyfish.png"},
+                {name: "Колючка", price: 2160.0, image: "images/artifacts/thorn.png"},
+                {name: "Пузырь", price: 3485.0, image: "images/artifacts/bubble.png"},
+                {name: "Мамины бусы", price: 1515.0, image: "images/artifacts/mama_beads.png"},
+                {name: "Ломоть мяса", price: 1765.0, image: "images/artifacts/meat_slice.png"},
+                {name: "Пленка", price: 3200.0, image: "images/artifacts/film.png"},
+                {name: "Капли", price: 580.0, image: "images/artifacts/drops.png"},
+                {name: "Лунный свет", price: 2415.0, image: "images/artifacts/moonlight.png"},
+                {name: "Вспышка", price: 3460.0, image: "images/artifacts/flash.png"},
+                {name: "Батарейка", price: 7600.0, image: "images/artifacts/battery.png"},
+                {name: "Каменный цветок", price: 3980.0, image: "images/artifacts/stone_flower.png"},
+                {name: "Сварка", price: 1817.0, image: "images/artifacts/welding.png"},
+                {name: "Колобок", price: 3800.0, image: "images/artifacts/kolobok.png"},
+                {name: "Гниль", price: 980.0, image: "images/artifacts/rot.png"},
+                {name: "Багрянец", price: 2600.0, image: "images/artifacts/crimson.png"},
+                {name: "Пламя", price: 4200.0, image: "images/artifacts/flame.png"},
+                {name: "Душа", price: 4900.0, image: "images/artifacts/soul.png"},
+                {name: "Глаз", price: 2350.0, image: "images/artifacts/eye.png"},
+                {name: "Кварц", price: 2250.0, image: "images/artifacts/quartz.png"},
+                {name: "Перекати-поле", price: 1150.0, image: "images/artifacts/tumbleweed.png"},
+                {name: "НЛО", price: 4200.0, image: "images/artifacts/ufo.png"},
+                {name: "Шаровая молния", price: 3568.0, image: "images/artifacts/ball_lightning.png"},
+                {name: "Капля яда", price: 5900.0, image: "images/artifacts/poison_drop.png"},
+                {name: "Имбирь", price: 2212.0, image: "images/artifacts/ginger.png"},
+                {name: "Отбойник", price: 2880.0, image: "images/artifacts/bumper.png"},
+                {name: "Синтез", price: 2650.0, image: "images/artifacts/synthesis.png"},
+                {name: "Браслет", price: 4500.0, image: "images/artifacts/bracelet.png"},
+                {name: "Ночник", price: 7000.0, image: "images/artifacts/night_light.png"},
+                {name: "Мох", price: 2508.0, image: "images/artifacts/moss.png"},
+                {name: "Дьяволистник", price: 6045.0, image: "images/artifacts/devils_leaf.png"},
+                {name: "Осмий", price: 1645.0, image: "images/artifacts/osmium.png"},
+                {name: "Электролит", price: 5435.0, image: "images/artifacts/electrolyte.png"},
+                {name: "Самородок", price: 6450.0, image: "images/artifacts/nugget.png"},
+                {name: "Янтарь", price: 13560.0, image: "images/artifacts/amber.png"},
+                {name: "Червь", price: 4345.0, image: "images/artifacts/worm.png"},
+                {name: "Разряд", price: 10000.0, image: "images/artifacts/discharge.png"},
+                {name: "Колесо", price: 895.0, image: "images/artifacts/wheel.png"},
+                {name: "Лайм", price: 12550.0, image: "images/artifacts/lime.png"},
+                {name: "Нос", price: 1670.0, image: "images/artifacts/nose.png"},
+                {name: "Лава", price: 3450.0, image: "images/artifacts/lava.png"},
+                {name: "Соль", price: 900.0, image: "images/artifacts/salt.png"},
+                {name: "Вий", price: 7135.0, image: "images/artifacts/vii.png"},
+                {name: "Кислота", price: 4550.0, image: "images/artifacts/acid.png"},
+                {name: "Устрица", price: 12100.0, image: "images/artifacts/oyster.png"},
+                {name: "Мясорубка", price: 13800.0, image: "images/artifacts/meat_grinder.png"},
+                {name: "Болид", price: 4678.0, image: "images/artifacts/bolide.png"},
+                {name: "Земля", price: 1700.0, image: "images/artifacts/earth.jpg"},
+                {name: "Пепелац", price: 8140.0, image: "images/artifacts/pelengator.png"},
+                {name: "Тесла", price: 5050.0, image: "images/artifacts/tesla.png"},
+                {name: "Спутник", price: 2440.0, image: "images/artifacts/satellite.png"},
+                {name: "Метеор", price: 4789.0, image: "images/artifacts/meteor.png"},
+                {name: "Стекло", price: 5000.0, image: "images/artifacts/glass.png"},
+                {name: "Пустота", price: 13333.0, image: "images/artifacts/void.png"},
+                {name: "Филосовский камень", price: 440.0, image: "images/artifacts/philosophers_stone.png"},
+                {name: "Базальт", price: 5555.0, image: "images/artifacts/basalt.png"},
+                {name: "Гантеля", price: 6665.0, image: "images/artifacts/dumbbell.png"},
+                {name: "Морской ёж", price: 2900.0, image: "images/artifacts/sea_urchin.png"},
+                {name: "Центрифуга", price: 3876.0, image: "images/artifacts/centrifuge.png"},
+                {name: "Фарш", price: 1100.0, image: "images/artifacts/minced_meat.png"},
+                {name: "Магма", price: 6250.0, image: "images/artifacts/magma.png"},
+                {name: "Ребус", price: 1942.0, image: "images/artifacts/rebus.png"},
+                {name: "Болотник", price: 1500.0, image: "images/artifacts/swamp.png"},
+                {name: "Ребра", price: 760.0, image: "images/artifacts/ribs.png"},
+                {name: "Игольник", price: 1717.0, image: "images/artifacts/needle_case.png"},
+                {name: "Серафим", price: 13900.0, image: "images/artifacts/seraphim.png"},
+                {name: "Горгона", price: 1915.0, image: "images/artifacts/gorgon.png"},
+                {name: "Коралл", price: 550.0, image: "images/artifacts/coral.png"},
+                {name: "Светляк", price: 6140.0, image: "images/artifacts/firefly.png"},
+                {name: "Нервы", price: 4000.0, image: "images/artifacts/nerves.png"},
+                {name: "Опал", price: 6150.0, image: "images/artifacts/opal.png"},
+                {name: "Взрыв", price: 7150.0, image: "images/artifacts/explosion.png"},
+                {name: "Пресс", price: 8765.0, image: "images/artifacts/press.png"},
+                {name: "Деликатес", price: 4567.0, image: "images/artifacts/delicacy.png"},
+                {name: "Бенгальский огонь", price: 1650.0, image: "images/artifacts/sparkler.png"},
+                {name: "Каменный ангел", price: 9050.0, image: "images/artifacts/stone_angel.png"},
+                {name: "Паук", price: 9050.0, image: "images/artifacts/spider.png"},
+                {name: "Уран", price: 1950.0, image: "images/artifacts/uranium.png"},
+                {name: "Азотный шар", price: 9356.0, image: "images/artifacts/nitrogen_ball.png"},
+                {name: "Аккумулятор", price: 800.0, image: "images/artifacts/accumulator.png"},
+                {name: "Гротекс", price: 2870.0, image: "images/artifacts/grotex.png"},
+                {name: "Сияние", price: 6670.0, image: "images/artifacts/glow.png"},
+                {name: "Иштар", price: 6074.0, image: "images/artifacts/ishtar.png"},
+                {name: "Соты", price: 8870.0, image: "images/artifacts/honeycomb.png"},
+                {name: "Цеп", price: 8970.0, image: "images/artifacts/chain.png"},
+                {name: "Палантир", price: 9340.0, image: "images/artifacts/palantir.png"},
+                {name: "Рачьи глаза", price: 650.0, image: "images/artifacts/crab_eyes.png"},
+                {name: "Мохито", price: 4967.0, image: "images/artifacts/mojito.png"},
+                {name: "Сетка", price: 3707.0, image: "images/artifacts/mesh.png"},
+                {name: "Изумруд", price: 5767.0, image: "images/artifacts/emerald.png"},
+                {name: "Корона", price: 7000.0, image: "images/artifacts/crown.png"},
+                {name: "Морок", price: 1760.0, image: "images/artifacts/fog.png"},
+                {name: "Серп", price: 5085.0, image: "images/artifacts/sickle.png"},
+                {name: "Клевер", price: 4104.0, image: "images/artifacts/clover.png"},
+                {name: "Серома", price: 4480.0, image: "images/artifacts/seroma.png"},
+                {name: "Пружина", price: 1650.0, image: "images/artifacts/spring.png"},
+                {name: "Желчь", price: 1787.0, image: "images/artifacts/bile.png"},
+                {name: "Петуния", price: 4235.0, image: "images/artifacts/petunia.png"},
+                {name: "фульгурит", price: 1000.0, image: "images/artifacts/fulgurite.png"},
+                {name: "Мираж", price: 1760.0, image: "images/artifacts/mirage.png"},
+                {name: "Финики", price: 2000.0, image: "images/artifacts/dates.png"},
+                {name: "Мрамор", price: 3100.0, image: "images/artifacts/marble.png"},
+                {name: "Кровь Камня", price: 500.0, image: "images/artifacts/stone_blood.png"},
+                {name: "Сувенир", price: 6050.0, image: "images/artifacts/souvenir.png"},
+                {name: "Водоворот", price: 2350.0, image: "images/artifacts/whirlpool.png"},
+                {name: "Парадокс", price: 3050.0, image: "images/artifacts/paradox.png"},
+                {name: "Угасшая звезда", price: 3100.0, image: "images/artifacts/faded_star.png"},
+                {name: "Грави", price: 2402.0, image: "images/artifacts/gravi.png"},
+                {name: "Демантоид", price: 3870.0, image: "images/artifacts/demantoid.png"},
+                {name: "Огненный шар", price: 1650.0, image: "images/artifacts/fireball.png"},
+                {name: "Репейник", price: 700.0, image: "images/artifacts/burdock.png"},
+                {name: "Кристалл", price: 3705.0, image: "images/artifacts/crystal.png"},
+                {name: "Тиски", price: 4460.0, image: "images/artifacts/vise.png"},
+                {name: "Осколюк", price: 3650.0, image: "images/artifacts/fragment.png"},
+                {name: "Колье", price: 13200.0, image: "images/artifacts/necklace.png"},
+                {name: "Черное сердце", price: 5900.0, image: "images/artifacts/black_heart.png"},
+                {name: "Кластер", price: 2125.0, image: "images/artifacts/cluster.png"},
+                {name: "Полярная звезда", price: 2222.0, image: "images/artifacts/polar_star.png"},
+                {name: "Сгусток", price: 1750.0, image: "images/artifacts/clot.png"},
+                {name: "Шишка", price: 8708.0, image: "images/artifacts/cone.png"},
+                {name: "Дух", price: 4897.0, image: "images/artifacts/spirit.png"},
+                {name: "Морской конёк", price: 2970.0, image: "images/artifacts/seahorse.png"},
+                {name: "Селен", price: 5124.0, image: "images/artifacts/selenium.png"},
+                {name: "Сердце", price: 2514.0, image: "images/artifacts/heart.png"},
+                {name: "Пена", price: 2760.0, image: "images/artifacts/foam.png"},
+                {name: "Кладофора", price: 12467.0, image: "images/artifacts/cladophora.png"},
+                {name: "Петля", price: 5228.0, image: "images/artifacts/loop.png"},
+                {name: "Выверт", price: 1750.0, image: "images/artifacts/twist.png"},
+                {name: "Ночная звезда", price: 3950.0, image: "images/artifacts/night_star.png"},
+                {name: "Улей", price: 1760.0, image: "images/artifacts/hive.png"},
+                {name: "Черная медуза", price: 4050.0, image: "images/artifacts/black_jellyfish.png"},
+                {name: "Креветка", price: 1000.0, image: "images/artifacts/shrimp.png"},
+                {name: "Каштан", price: 1750.0, image: "images/artifacts/chestnut.png"},
+                {name: "Тромб", price: 2707.0, image: "images/artifacts/thrombus.png"},
+                {name: "Чертополох", price: 1055.0, image: "images/artifacts/thistle.png"},
+                {name: "Котел", price: 4050.0, image: "images/artifacts/cauldron.png"},
+                {name: "Лишайник", price: 875.0, image: "images/artifacts/lichen.png"},
+                {name: "Упырь", price: 4050.0, image: "images/artifacts/ghoul.png"},
+                {name: "Криль", price: 9198.0, image: "images/artifacts/krill.png"},
+                {name: "Золотая рыбка", price: 3656.0, image: "images/artifacts/goldfish.png"},
+                {name: "Хлорофилл", price: 2000.0, image: "images/artifacts/chlorophyll.png"},
+                {name: "Минерал", price: 2980.0, image: "images/artifacts/mineral.png"},
+                {name: "Взор", price: 3208.0, image: "images/artifacts/gaze.png"},
+                {name: "Бакелит", price: 1150.0, image: "images/artifacts/bakelite.png"},
+                {name: "Окаменелость", price: 1870.0, image: "images/artifacts/fossil.png"},
+                {name: "Лоза", price: 980.0, image: "images/artifacts/vine.png"},
+                {name: "Нейрон", price: 6905.0, image: "images/artifacts/neuron.png"},
+                {name: "Вулкан", price: 4055.0, image: "images/artifacts/volcano.png"},
+                {name: "Протуберанец", price: 7890.0, image: "images/artifacts/protuberance.png"},
+                {name: "Валет", price: 8780.0, image: "images/artifacts/jack.png"},
+                {name: "Ржавь", price: 4987.0, image: "images/artifacts/rust.png"},
+                {name: "Череп", price: 6072.0, image: "images/artifacts/skull.png"},
+                {name: "Снежинка", price: 2700.0, image: "images/artifacts/snowflake.png"},
+                {name: "Сплав", price: 5345.0, image: "images/artifacts/alloy.png"},
+                {name: "Хрусталь", price: 618.0, image: "images/artifacts/crystal_clear.png"},
+                {name: "Рубин", price: 6124.0, image: "images/artifacts/ruby.png"},
+                {name: "Нимб", price: 800.0, image: "images/artifacts/halo.png"},
+                {name: "Кольцо", price: 11765.0, image: "images/artifacts/ring.png"},
+                {name: "Батавские слезки", price: 8964.0, image: "images/artifacts/batavian_tears.png"},
+                {name: "Уроробос", price: 9150.0, image: "images/artifacts/ouroboros.png"}
+            ],
+            garbage: [
+                {name: "Руководство по выявлению", price: 70.0, image: "images/garbage/detection_guide.png"},
+		{name: "Журнал 'Основы проектирования патронов'", price: 26.0, image: "images/garbage/ammo_design_journal.png"},
+		{name: "Операция флага", price: 50.0, image: "images/garbage/flag_operation.png"},
+		{name: "Реастрочная балалейка", price: 50.0, image: "images/garbage/balalaika.png"},
+		{name: "Операция гармоника", price: 150.0, image: "images/garbage/harmonic_operation.png"},
+		{name: "Бумага", price: 40.0, image: "images/garbage/paper.png"},
+		{name: "Бульги, керосина", price: 45.0, image: "images/garbage/kerosene.png"},
+		{name: "Отсыревшие патроны 45 АСР", price: 40.0, image: "images/garbage/wet_45_acp.png"},
+		{name: "Отсыревшие патроны 12 каллибра", price: 40.0, image: "images/garbage/wet_12_gauge.png"},
+		{name: "Отсыревшие патроны 9х18", price: 15.0, image: "images/garbage/wet_9x18.png"},
+		{name: "Порезный технический журнал", price: 45.0, image: "images/garbage/technical_journal.png"},
+		{name: "Методиственные очки", price: 70.0, image: "images/garbage/glasses.png"},
+		{name: "Шахматная доска", price: 40.0, image: "images/garbage/chess_board.png"},
+		{name: "Личное фото девушки", price: 160.0, image: "images/garbage/girl_photo.png"},
+		{name: "Сверток старых газет", price: 10.0, image: "images/garbage/newspaper_bundle.png"},
+		{name: "Операция газета", price: 10.0, image: "images/garbage/newspaper_operation.png"},
+		{name: "Опарые сапоги", price: 30.0, image: "images/garbage/boots.png"},
+		{name: "Ржавая зажигалка", price: 30.0, image: "images/garbage/rusty_lighter.png"},
+		{name: "Карты", price: 10.0, image: "images/garbage/cards.png"},
+		{name: "Серебряное ожерелье", price: 325.0, image: "images/garbage/silver_necklace.png"},
+		{name: "Канистра Белкина", price: 125.0, image: "images/garbage/belkin_canister.png"},
+		{name: "Журнал Maxim", price: 125.0, image: "images/garbage/maxim_magazine.png"},
+		{name: "Журнал Playboy", price: 75.0, image: "images/garbage/playboy_magazine.png"},
+		{name: "Спальник", price: 25.0, image: "images/garbage/sleeping_bag.png"}
+            ],
+            medicine: [
+                {name: "Неочищенная бутылка воды", price: 30.0, image: "images/medicine/water_bottle.png"},
+		{name: "Акватабс", price: 75.0, image: "images/medicine/aquatabs.png"},
+		{name: "Мешок с крупой", price: 85.0, image: "images/medicine/grain_bag.png"},
+		{name: "Пачка Сахара", price: 105.0, image: "images/medicine/sugar_pack.png"},
+		{name: "Короб с чаем", price: 50.0, image: "images/medicine/tea_box.png"},
+		{name: "Банка со специями", price: 75.0, image: "images/medicine/spices_jar.png"},
+		{name: "Масло для готовки", price: 75.0, image: "images/medicine/cooking_oil.png"},
+		{name: "Мясо слепого пса", price: 15.0, image: "images/medicine/blind_dog_meat.png"},
+		{name: "Банка соли", price: 40.0, image: "images/medicine/salt_jar.png"},
+		{name: "Гороховое пюре", price: 40.0, image: "images/medicine/pea_puree.png"},
+		{name: "Аптечка", price: 100.0, image: "images/medicine/medkit.png"},
+		{name: "Старый бинт", price: 75.0, image: "images/medicine/old_bandage.png"},
+		{name: "Викасол", price: 80.0, image: "images/medicine/vikasol.png"},
+		{name: "Пустой блистер", price: 80.0, image: "images/medicine/empty_blister.png"},
+		{name: "Ацизол", price: 80.0, image: "images/medicine/atsizol.png"},
+		{name: "Пакет с кровью", price: 100.0, image: "images/medicine/blood_pack.png"},
+		{name: "Пустой шприц", price: 50.0, image: "images/medicine/empty_syringe.png"},
+		{name: "Пустой пакет с кровью", price: 50.0, image: "images/medicine/empty_blood_pack.png"},
+		{name: "Антисептик", price: 65.0, image: "images/medicine/antiseptic.png"},
+		{name: "Армейское обезболивающее", price: 95.0, image: "images/medicine/army_painkiller.png"},
+		{name: "Инъекция морфина", price: 120.0, image: "images/medicine/morphine_injection.png"},
+		{name: "Препарат E-190", price: 195.0, image: "images/medicine/e190_drug.png"}
+            ]
+        };
+
+        let selectedItems = {};
+        let currentCategory = 'scrap';
+        let currentDetailItem = null;
+        let bonusApplied = false;
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            loadCategory('scrap');
+            setupEventListeners();
+            updateTotal();
+        }
+
+        function setupEventListeners() {
+            // Вкладки категорий
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchCategory(this.dataset.category);
+                });
+            });
+        }
+
+        function switchCategory(category) {
+            currentCategory = category;
+            
+            // Обновляем активную вкладку
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-category="${category}"]`).classList.add('active');
+            
+            // Загружаем категорию
+            loadCategory(category);
+        }
+
+        function loadCategory(category) {
+            const container = document.getElementById('itemsContainer');
+            container.innerHTML = '';
+
+            itemsDatabase[category].forEach((item, index) => {
+                const itemId = `${category}_${index}`;
+                const quantity = selectedItems[itemId] || 0;
+                
+                const itemElement = document.createElement('div');
+                itemElement.className = `item-card ${quantity > 0 ? 'selected' : ''}`;
+                itemElement.setAttribute('data-item', itemId);
+                
+                itemElement.innerHTML = `
+                    <div class="item-image">
+                        <img src="${item.image}" alt="${item.name}" 
+                             onerror="handleImageError(this)">
+                    </div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-price">${formatPrice(item.price)} руб.</div>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="changeQuantity('${itemId}', -1)">-</button>
+                        <input type="number" class="quantity-input" value="${quantity}" min="0" max="100"
+                               onchange="setQuantity('${itemId}', this.value)" 
+                               oninput="validateNumber(this)">
+                        <button class="quantity-btn" onclick="changeQuantity('${itemId}', 1)">+</button>
+                    </div>
+                `;
+                
+                // Обработчик для показа деталей
+                itemElement.addEventListener('click', function(e) {
+                    if (!e.target.classList.contains('quantity-btn') && !e.target.classList.contains('quantity-input')) {
+                        showItemDetails(itemId, item);
+                    }
+                });
+                
+                container.appendChild(itemElement);
+            });
+        }
+
+        function handleImageError(img) {
+            img.style.display = 'none';
+            img.parentNode.innerHTML = '<div style="color: #666; text-align: center; padding: 10px; font-size: 0.8em;">📦<br>Нет изображения</div>';
+        }
+
+        function showItemDetails(itemId, item) {
+            currentDetailItem = itemId;
+            const quantity = selectedItems[itemId] || 0;
+            const total = item.price * quantity;
+            
+            document.getElementById('detailName').textContent = item.name;
+            document.getElementById('detailPrice').textContent = `Цена: ${formatPrice(item.price)} руб.`;
+            document.getElementById('detailTotal').textContent = `Сумма: ${formatPrice(total)} руб.`;
+            
+            const detailImage = document.getElementById('detailImage');
+            detailImage.innerHTML = `<img src="${item.image}" alt="${item.name}" 
+                onerror="handleDetailImageError(this)">`;
+        }
+
+        function handleDetailImageError(img) {
+            img.style.display = 'none';
+            detailImage.innerHTML = '<div style="color: #666; text-align: center; padding: 20px; font-size: 0.8em;">📦<br>Изображение<br>недоступно</div>';
+        }
+
+        function changeQuantity(itemId, delta) {
+            const currentQuantity = selectedItems[itemId] || 0;
+            const newQuantity = Math.max(0, Math.min(100, currentQuantity + delta));
+            setQuantity(itemId, newQuantity);
+        }
+
+        function setQuantity(itemId, quantity) {
+            quantity = parseInt(quantity) || 0;
+            // Ограничиваем максимум 100
+            quantity = Math.min(100, Math.max(0, quantity));
+            selectedItems[itemId] = quantity;
+            
+            updateItemDisplay(itemId, quantity);
+            updateTotal();
+            updateSelectedCount();
+            
+            // Обновляем детали если это текущий предмет
+            if (currentDetailItem === itemId) {
+                const [category, index] = itemId.split('_');
+                const item = itemsDatabase[category][parseInt(index)];
+                showItemDetails(itemId, item);
+            }
+        }
+
+        function validateNumber(input) {
+            let value = input.value.replace(/[^0-9]/g, '');
+            if (value === '') value = '0';
+            // Ограничиваем максимум 100
+            value = Math.min(100, parseInt(value) || 0);
+            input.value = value;
+        }
+
+        function updateItemDisplay(itemId, quantity) {
+            const itemElement = document.querySelector(`[data-item="${itemId}"]`);
+            if (!itemElement) return;
+            
+            const input = itemElement.querySelector('.quantity-input');
+            input.value = quantity;
+            
+            if (quantity > 0) {
+                itemElement.classList.add('selected');
+            } else {
+                itemElement.classList.remove('selected');
+            }
+        }
+
+        function updateTotal() {
+            let total = 0;
+            
+            for (const [itemId, quantity] of Object.entries(selectedItems)) {
+                if (quantity > 0) {
+                    const [category, index] = itemId.split('_');
+                    const item = itemsDatabase[category][parseInt(index)];
+                    total += item.price * quantity;
+                }
+            }
+            
+            // Применяем бонус если он активирован
+            if (bonusApplied) {
+                const bonusTotal = total * 1.15;
+                document.getElementById('totalSum').textContent = formatPrice(total);
+                document.getElementById('bonusSum').textContent = `+15%: ${formatPrice(bonusTotal)}`;
+                document.getElementById('bonusSum').style.display = 'block';
+            } else {
+                document.getElementById('totalSum').textContent = formatPrice(total);
+                document.getElementById('bonusSum').style.display = 'none';
+            }
+        }
+
+        function updateSelectedCount() {
+            let count = 0;
+            for (const quantity of Object.values(selectedItems)) {
+                if (quantity > 0) count++;
+            }
+            document.getElementById('selectedCount').textContent = `Выбрано предметов: ${count}`;
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('ru-RU', {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            }).format(price);
+        }
+
+        function resetAll() {
+            if (confirm('Вы уверены, что хотите сбросить все выбранные предметы?')) {
+                selectedItems = {};
+                bonusApplied = false;
+                loadCategory(currentCategory);
+                updateTotal();
+                updateSelectedCount();
+                
+                document.getElementById('detailName').textContent = '-';
+                document.getElementById('detailPrice').textContent = 'Цена: -';
+                document.getElementById('detailTotal').textContent = 'Сумма: -';
+                document.getElementById('detailImage').innerHTML = '<div style="color: #666; text-align: center; font-size: 0.9em;">Выберите предмет</div>';
+            }
+        }
+
+        function addBonus() {
+            bonusApplied = !bonusApplied;
+            updateTotal();
+        }
+    </script>
+</body>
+</html>
