@@ -935,6 +935,7 @@
         let currentDetailItem = null;
         let bonusApplied = false;
         let currentSearch = '';
+        let currentFilteredItems = [];
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
@@ -1047,14 +1048,25 @@
 
             let items = itemsDatabase[category];
             
+            currentFilteredItems = [];
+            
             if (currentSearch) {
-                items = items.filter(item => 
-                    item.name.toLowerCase().includes(currentSearch)
-                );
+                items = items.filter((item, index) => {
+                    const matches = item.name.toLowerCase().includes(currentSearch);
+                    if (matches) {
+                        currentFilteredItems.push({item, originalIndex: index});
+                    }
+                    return matches;
+                });
+            } else {
+                items.forEach((item, index) => {
+                    currentFilteredItems.push({item, originalIndex: index});
+                });
             }
 
-            items.forEach((item, index) => {
-                const itemId = `${category}_${index}`;
+            currentFilteredItems.forEach((filteredItem, displayIndex) => {
+                const {item, originalIndex} = filteredItem;
+                const itemId = `${category}_${originalIndex}`;
                 const quantity = selectedItems[itemId] || 0;
                 
                 const itemElement = document.createElement('div');
@@ -1086,7 +1098,7 @@
                 container.appendChild(itemElement);
             });
             
-            if (currentSearch && items.length === 0) {
+            if (currentSearch && currentFilteredItems.length === 0) {
                 container.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 40px; grid-column: 1 / -1;">Не найдено предметов по запросу "${currentSearch}"</div>`;
             }
         }
