@@ -1219,44 +1219,47 @@
             return total;
         }
 
-        function playResetSound(total) {
-            const audio = new Audio();
-            
-            if (total < 1000) {
-                audio.src = 'sounds/low_money.mp3';
-            } else if (total > 80000) {
-                audio.src = 'sounds/high_money.mp3';
-            } else {
-                return;
-            }
-            
-            audio.play().catch(error => {
-                console.log('Не удалось воспроизвести звук:', error);
-            });
-        }
 
-        function resetAll() {
-            const currentTotal = calculateTotal();
-            
-            selectedItems = {};
-            bonusApplied = false;
-            currentSearch = '';
-            document.getElementById('searchInput').value = '';
-            loadCategory(currentCategory);
-            updateTotal();
-            updateSelectedCount();
-            
-            document.getElementById('detailName').textContent = '-';
-            document.getElementById('detailPrice').textContent = 'Цена: -';
-            document.getElementById('detailTotal').textContent = 'Сумма: -';
-            document.getElementById('detailImage').innerHTML = '<div style="color: #666; text-align: center; font-size: 0.9em;">Выберите предмет</div>';
-            
-            document.querySelectorAll('.category-tab').forEach(tab => {
-                tab.classList.remove('highlighted');
-            });
-            
-            playResetSound(currentTotal);
-        }
+		function resetAll() {
+		    const currentTotal = calculateTotal();
+		    
+		    selectedItems = {};
+		    bonusApplied = false;
+		    currentSearch = '';
+		    document.getElementById('searchInput').value = '';
+		    loadCategory(currentCategory);
+		    updateTotal();
+		    updateSelectedCount();
+		    
+		    document.getElementById('detailName').textContent = '-';
+		    document.getElementById('detailPrice').textContent = 'Цена: -';
+		    document.getElementById('detailTotal').textContent = 'Сумма: -';
+		    document.getElementById('detailImage').innerHTML = '<div style="color: #666; text-align: center; font-size: 0.9em;">Выберите предмет</div>';
+		    
+		    document.querySelectorAll('.category-tab').forEach(tab => {
+		        tab.classList.remove('highlighted');
+		    });
+		    
+		    playResetSound(currentTotal);
+		}
+		
+		function playResetSound(total) {
+		    const audio = new Audio();
+		    
+		    audio.volume = 0.3;
+		    
+		    if (total < 1000) {
+		        audio.src = 'sounds/low_money.mp3';
+		    } else if (total > 80000) {
+		        audio.src = 'sounds/high_money.mp3';
+		    } else {
+		        return;
+		    }
+		    
+		    audio.play().catch(error => {
+		        console.log('Не удалось воспроизвести звук:', error);
+		    });
+		}
 
         function addBonus() {
             bonusApplied = !bonusApplied;
