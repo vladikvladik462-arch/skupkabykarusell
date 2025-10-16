@@ -879,8 +879,8 @@
                 {name: "Отсыревшие патроны 45 АСР", price: 40.0, image: "images/garbage/wet_45_acp.png"},
                 {name: "Отсыревшие патроны 12 каллибра", price: 40.0, image: "images/garbage/wet_12_gauge.png"},
                 {name: "Отсыревшие патроны 9х18", price: 15.0, image: "images/garbage/wet_9x18.png"},
-				{name: "Отсыревшие патроны 5.56x45", price: 20.0, image: "images/garbage/wet_5.56x45.png"},
-				{name: "Отсыревшие патроны 7.62x25", price: 15.0, image: "images/garbage/wet_762x25.png"},
+		{name: "Отсыревшие патроны 5.56x45", price: 20.0, image: "images/garbage/wet_5.56x45.png"},
+		{name: "Отсыревшие патроны 7.62x25", price: 15.0, image: "images/garbage/wet_762x25.png"},
                 {name: "Порванный технический журнал", price: 45.0, image: "images/garbage/technical_journal.png"},
                 {name: "Мотоциклетные очки", price: 70.0, image: "images/garbage/glasses.png"},
                 {name: "Шахматная доска", price: 40.0, image: "images/garbage/chess_board.png"},
@@ -895,15 +895,15 @@
                 {name: "Журнал Maxim", price: 125.0, image: "images/garbage/maxim_magazine.png"},
                 {name: "Журнал Playboy", price: 75.0, image: "images/garbage/playboy_magazine.png"},
                 {name: "Спальник", price: 25.0, image: "images/garbage/sleeping_bag.png"},
-				{name: "Медаль 'За отвагу'", price: 350.0, image: "images/garbage/medal_courage.png"},
-				{name: "Орден Ленина", price: 700.0, image: "images/garbage/order_lenin.png"},
-				{name: "Орден славы", price: 700.0, image: "images/garbage/order_glory.png"},
-				{name: "Орден отечественной войны", price: 600.0, image: "images/garbage/order_patriotic_war.png"},
-				{name: "Потёртая звезда на ленте", price: 225.0, image: "images/garbage/worn_star.png"},
-				{name: "Значок НКВД", price: 600.0, image: "images/garbage/nkvd_badge.png"},
-				{name: "Медаль 'За заслуги'", price: 150.0, image: "images/garbage/medal_merit.png"},
-				{name: "Значок 'Снайпер'", price: 455.0, image: "images/garbage/sniper_badge.png"},
-				{name: "Газовая плитка", price: 25.0, image: "images/garbage/gas_stove.png"}
+		{name: "Медаль 'За отвагу'", price: 350.0, image: "images/garbage/medal_courage.png"},
+		{name: "Орден Ленина", price: 700.0, image: "images/garbage/order_lenin.png"},
+		{name: "Орден славы", price: 700.0, image: "images/garbage/order_glory.png"},
+		{name: "Орден отечественной войны", price: 600.0, image: "images/garbage/order_patriotic_war.png"},
+		{name: "Потёртая звезда на ленте", price: 225.0, image: "images/garbage/worn_star.png"},
+		{name: "Значок НКВД", price: 600.0, image: "images/garbage/nkvd_badge.png"},
+		{name: "Медаль 'За заслуги'", price: 150.0, image: "images/garbage/medal_merit.png"},
+		{name: "Значок 'Снайпер'", price: 455.0, image: "images/garbage/sniper_badge.png"},
+		{name: "Газовая плитка", price: 25.0, image: "images/garbage/gas_stove.png"}
             ],
             medicine: [
                 {name: "Неочищенная бутылка воды", price: 30.0, image: "images/medicine/water_bottle.png"},
@@ -1208,25 +1208,55 @@
             }).format(price);
         }
 
-        function resetAll() {
-            if (confirm('Вы уверены, что хотите сбросить все выбранные предметы?')) {
-                selectedItems = {};
-                bonusApplied = false;
-                currentSearch = '';
-                document.getElementById('searchInput').value = '';
-                loadCategory(currentCategory);
-                updateTotal();
-                updateSelectedCount();
-                
-                document.getElementById('detailName').textContent = '-';
-                document.getElementById('detailPrice').textContent = 'Цена: -';
-                document.getElementById('detailTotal').textContent = 'Сумма: -';
-                document.getElementById('detailImage').innerHTML = '<div style="color: #666; text-align: center; font-size: 0.9em;">Выберите предмет</div>';
-                
-                document.querySelectorAll('.category-tab').forEach(tab => {
-                    tab.classList.remove('highlighted');
-                });
+        function calculateTotal() {
+            let total = 0;
+            for (const [itemId, quantity] of Object.entries(selectedItems)) {
+                if (quantity > 0) {
+                    const [category, index] = itemId.split('_');
+                    const item = itemsDatabase[category][parseInt(index)];
+                    total += item.price * quantity;
+                }
             }
+            return total;
+        }
+
+        function playResetSound(total) {
+            const audio = new Audio();
+            
+            if (total < 1000) {
+                audio.src = 'sounds/low_money.mp3';
+            } else if (total > 80000) {
+                audio.src = 'sounds/high_money.mp3';
+            } else {
+                return;
+            }
+            
+            audio.play().catch(error => {
+                console.log('Не удалось воспроизвести звук:', error);
+            });
+        }
+
+        function resetAll() {
+            const currentTotal = calculateTotal();
+            
+            selectedItems = {};
+            bonusApplied = false;
+            currentSearch = '';
+            document.getElementById('searchInput').value = '';
+            loadCategory(currentCategory);
+            updateTotal();
+            updateSelectedCount();
+            
+            document.getElementById('detailName').textContent = '-';
+            document.getElementById('detailPrice').textContent = 'Цена: -';
+            document.getElementById('detailTotal').textContent = 'Сумма: -';
+            document.getElementById('detailImage').innerHTML = '<div style="color: #666; text-align: center; font-size: 0.9em;">Выберите предмет</div>';
+            
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('highlighted');
+            });
+            
+            playResetSound(currentTotal);
         }
 
         function addBonus() {
