@@ -872,7 +872,7 @@
                 {name: "Журнал 'Основы проектирования патронов'", price: 26.0, image: "images/garbage/ammo_design_journal.png"},
                 {name: "Старая флага", price: 50.0, image: "images/garbage/flag_operation.png"},
                 {name: "Растроенная балалайка", price: 50.0, image: "images/garbage/balalaika.png"},
-                {name: "Операция гармоника", price: 150.0, image: "images/garbage/harmonic_operation.png"},
+                {name: "Старая гармошка", price: 150.0, image: "images/garbage/harmonic_operation.png"},
                 {name: "Бумага", price: 40.0, image: "images/garbage/paper.png"},
                 {name: "Бутылка керосина", price: 45.0, image: "images/garbage/kerosene.png"},
                 {name: "Отсыревшие патроны 45 АСР", price: 40.0, image: "images/garbage/wet_45_acp.png"},
@@ -1246,11 +1246,11 @@
 		function playResetSound(total) {
 		    const audio = new Audio();
 		    
-		    audio.volume = 0.3;
+		    audio.volume = 0.1;
 		    
 		    if (total < 1000) {
 		        audio.src = 'sounds/low_money.mp3';
-		    } else if (total > 80000) {
+		    } else if (total > 50000) {
 		        audio.src = 'sounds/high_money.mp3';
 		    } else {
 		        return;
