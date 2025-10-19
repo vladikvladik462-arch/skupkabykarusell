@@ -17,6 +17,7 @@
             --success-color: #4CAF50;
             --bonus-color: #FF9800;
             --search-highlight: #ff4444;
+			--sale-color: #2196F3;
         }
 
         * {
@@ -253,6 +254,21 @@
             display: flex;
             flex-direction: column;
         }
+		.control-btn.sale {
+		    background: #2a3a5a;
+		    border-color: #3a5a7a;
+		    color: var(--sale-color);
+		}
+		
+		.control-btn.sale:hover {
+		    background: #3a5a7a;
+		}
+		.sale-amount {
+		    font-size: 1.5em;
+		    color: var(--sale-color);
+		    font-weight: bold;
+		    margin: 5px 0;
+		}
 
         .total-section {
             background: var(--bg-tertiary);
@@ -544,12 +560,14 @@
                 <div class="total-label">ОБЩАЯ СУММА</div>
                 <div class="total-amount" id="totalSum">0</div>
                 <div class="bonus-amount" id="bonusSum" style="display: none;">+15%: 0</div>
-                <div class="selected-count" id="selectedCount">Выбрано предметов: 0</div>
+				<div class="sale-amount" id="saleSum" style="display: none;">+30%: 0</div>
+    			<div class="selected-count" id="selectedCount">Выбрано предметов: 0</div>
             </div>
 
             <div class="control-buttons">
                 <button class="control-btn reset" onclick="resetAll()">🔄 Сбросить всё</button>
                 <button class="control-btn bonus" onclick="addBonus()">🎁 Добавить 15%</button>
+				 <button class="control-btn sale" onclick="addSale()">💰 Продажа</button>
             </div>
 
             <div class="item-details">
@@ -934,6 +952,7 @@
         let currentCategory = 'scrap';
         let currentDetailItem = null;
         let bonusApplied = false;
+		let saleApplied = false;
         let currentSearch = '';
         let currentFilteredItems = [];
 
@@ -1170,28 +1189,35 @@
             }
         }
 
-        function updateTotal() {
-            let total = 0;
-            
-            for (const [itemId, quantity] of Object.entries(selectedItems)) {
-                if (quantity > 0) {
-                    const [category, index] = itemId.split('_');
-                    const item = itemsDatabase[category][parseInt(index)];
-                    total += item.price * quantity;
-                }
-            }
-            
-            if (bonusApplied) {
-                const bonusTotal = total * 1.15;
-                document.getElementById('totalSum').textContent = formatPrice(total);
-                document.getElementById('bonusSum').textContent = `+15%: ${formatPrice(bonusTotal)}`;
-                document.getElementById('bonusSum').style.display = 'block';
-            } else {
-                document.getElementById('totalSum').textContent = formatPrice(total);
-                document.getElementById('bonusSum').style.display = 'none';
-            }
-        }
-
+       function updateTotal() {
+		    let total = 0;
+		    
+		    for (const [itemId, quantity] of Object.entries(selectedItems)) {
+		        if (quantity > 0) {
+		            const [category, index] = itemId.split('_');
+		            const item = itemsDatabase[category][parseInt(index)];
+		            total += item.price * quantity;
+		        }
+		    }
+		    
+		    if (bonusApplied) {
+		        const bonusTotal = total * 1.15;
+		        document.getElementById('totalSum').textContent = formatPrice(total);
+		        document.getElementById('bonusSum').textContent = `+15%: ${formatPrice(bonusTotal)}`;
+		        document.getElementById('bonusSum').style.display = 'block';
+		        document.getElementById('saleSum').style.display = 'none';
+		    } else if (saleApplied) {
+		        const saleTotal = total * 1.30;
+		        document.getElementById('totalSum').textContent = formatPrice(total);
+		        document.getElementById('saleSum').textContent = `+30%: ${formatPrice(saleTotal)}`;
+		        document.getElementById('saleSum').style.display = 'block';
+		        document.getElementById('bonusSum').style.display = 'none';
+		    } else {
+		        document.getElementById('totalSum').textContent = formatPrice(total);
+		        document.getElementById('bonusSum').style.display = 'none';
+		        document.getElementById('saleSum').style.display = 'none';
+		    }
+		}
         function updateSelectedCount() {
             let count = 0;
             for (const quantity of Object.values(selectedItems)) {
@@ -1225,6 +1251,7 @@
 		    
 		    selectedItems = {};
 		    bonusApplied = false;
+			saleApplied = false;
 		    currentSearch = '';
 		    document.getElementById('searchInput').value = '';
 		    loadCategory(currentCategory);
@@ -1263,8 +1290,14 @@
 
         function addBonus() {
             bonusApplied = !bonusApplied;
+			saleApplied = false;
             updateTotal();
         }
+		function addSale() {
+		    saleApplied = !saleApplied;
+		    bonusApplied = false;
+		    updateTotal();
+		}
     </script>
 </body>
 </html>
