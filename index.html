@@ -1101,7 +1101,7 @@
                     <div class="item-price">${formatPrice(item.price)} руб.</div>
                     <div class="quantity-controls">
                         <button class="quantity-btn" onclick="changeQuantity('${itemId}', -1)">-</button>
-                        <input type="number" class="quantity-input" value="${quantity}" min="0" max="100"
+                        <input type="number" class="quantity-input" value="${quantity}" min="0" max="200"
                                onchange="setQuantity('${itemId}', this.value)" 
                                oninput="validateNumber(this)">
                         <button class="quantity-btn" onclick="changeQuantity('${itemId}', 1)">+</button>
@@ -1148,13 +1148,13 @@
 
         function changeQuantity(itemId, delta) {
             const currentQuantity = selectedItems[itemId] || 0;
-            const newQuantity = Math.max(0, Math.min(100, currentQuantity + delta));
+            const newQuantity = Math.max(0, Math.min(200, currentQuantity + delta));
             setQuantity(itemId, newQuantity);
         }
 
         function setQuantity(itemId, quantity) {
             quantity = parseInt(quantity) || 0;
-            quantity = Math.min(100, Math.max(0, quantity));
+            quantity = Math.min(200, Math.max(0, quantity));
             selectedItems[itemId] = quantity;
             
             updateItemDisplay(itemId, quantity);
