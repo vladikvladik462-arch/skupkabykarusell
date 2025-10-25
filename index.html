@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>STALKER - Калькулятор скупки МЗ</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root {
             --bg-primary: #1a1a1a;
@@ -1371,6 +1373,19 @@
     </div>
 
     <script>
+        const firebaseConfig = {
+  		apiKey: "AIzaSyCiIspoXDDicZrnbxxz_V3oanILIG2I6oE",
+  		authDomain: "skupkabykarusell.firebaseapp.com",
+  		databaseURL: "https://skupkabykarusell-default-rtdb.europe-west1.firebasedatabase.app",
+  		projectId: "skupkabykarusell",
+  		storageBucket: "skupkabykarusell.firebasestorage.app",
+  		messagingSenderId: "308154796449",
+  		appId: "1:308154796449:web:e5baf2c54ad8ad021f63e0"
+		};
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         const itemsDatabase = {
             scrap: [
                 {name: "Предохранитель", price: 600.0, image: "images/scrap/fuse.png"},
@@ -1746,8 +1761,6 @@
         let isSidebarOpen = false;
         let editMode = false;
 
-        const API_URL = 'https://jsonblob.com/api/jsonBlob';
-
         let loans = [];
         let storageRentals = [];
         let lockedItems = {};
@@ -1759,24 +1772,24 @@
         let editingStorageId = null;
         let currentSafe = 1;
 
-        let dataId = '';
-
         async function loadData() {
             try {
-                const response = await fetch(`${API_URL}/1309293260908601344`);
-                const data = await response.json();
+                const snapshot = await database.ref('/data').once('value');
+                const data = snapshot.val();
                 
-                loans = data.loans || [];
-                storageRentals = data.storageRentals || [];
-                lockedItems = data.lockedItems || {};
-                customPrices = data.customPrices || {};
+                if (data) {
+                    loans = data.loans || [];
+                    storageRentals = data.storageRentals || [];
+                    lockedItems = data.lockedItems || {};
+                    customPrices = data.customPrices || {};
+                }
                 
                 updateLoansTable();
                 updateStorageTable();
                 createStorageGrid();
                 loadCategory(currentCategory);
             } catch (error) {
-                console.log('Не удалось загрузить данные, используем локальные');
+                console.log('Не удалось загрузить данные из Firebase, используем локальные', error);
                 loans = JSON.parse(localStorage.getItem('mz_loans')) || [];
                 storageRentals = JSON.parse(localStorage.getItem('mz_storage_rentals')) || [];
                 lockedItems = JSON.parse(localStorage.getItem('mz_locked_items')) || {};
@@ -1793,35 +1806,30 @@
             };
 
             try {
-                if (!dataId) {
-                    const response = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data)
-                    });
-                    const location = response.headers.get('Location');
-                    if (location) {
-                        dataId = location.split('/').pop();
-                    }
-                } else {
-                    await fetch(`${API_URL}/${dataId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data)
-                    });
-                }
+                await database.ref('/data').set(data);
             } catch (error) {
-                console.log('Не удалось сохранить данные в облако, сохраняем локально');
+                console.log('Не удалось сохранить данные в Firebase, сохраняем локально', error);
                 localStorage.setItem('mz_loans', JSON.stringify(loans));
                 localStorage.setItem('mz_storage_rentals', JSON.stringify(storageRentals));
                 localStorage.setItem('mz_locked_items', JSON.stringify(lockedItems));
                 localStorage.setItem('mz_custom_prices', JSON.stringify(customPrices));
             }
         }
+
+        database.ref('/data').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                loans = data.loans || [];
+                storageRentals = data.storageRentals || [];
+                lockedItems = data.lockedItems || {};
+                customPrices = data.customPrices || {};
+                
+                updateLoansTable();
+                updateStorageTable();
+                createStorageGrid();
+                if (currentCategory) loadCategory(currentCategory);
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
@@ -2957,28 +2965,32 @@
             await saveData();
             updateStorageTable();
             createStorageGrid();
-            
-            if (editingStorageId === rentalId) {
-                cancelEditStorage();
-            }
         }
 
         function getRandomColor() {
-            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE'];
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
             return colors[Math.floor(Math.random() * colors.length)];
         }
 
         async function resetAllPrices() {
-            if (!editMode || !confirm('Вы уверены, что хотите сбросить ВСЕ измененные цены?')) return;
+            if (!editMode) return;
+            
+            if (!confirm('Вы уверены, что хотите сбросить ВСЕ пользовательские цены?')) {
+                return;
+            }
             
             customPrices = {};
             await saveData();
             loadCategory(currentCategory);
-            showNotification('Все цены сброшены до стандартных', 'success');
+            showNotification('Все пользовательские цены сброшены', 'success');
         }
 
         async function unlockAllItems() {
-            if (!editMode || !confirm('Вы уверены, что хотите разблокировать ВСЕ предметы?')) return;
+            if (!editMode) return;
+            
+            if (!confirm('Вы уверены, что хотите разблокировать ВСЕ предметы?')) {
+                return;
+            }
             
             lockedItems = {};
             await saveData();
