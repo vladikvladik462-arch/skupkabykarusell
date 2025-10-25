@@ -1745,11 +1745,13 @@
         let currentFilteredItems = [];
         let isSidebarOpen = false;
         let editMode = false;
-        let lockedItems = JSON.parse(localStorage.getItem('mz_locked_items')) || {};
-        let customPrices = JSON.parse(localStorage.getItem('mz_custom_prices')) || {};
 
-        let loans = JSON.parse(localStorage.getItem('mz_loans')) || [];
-        let storageRentals = JSON.parse(localStorage.getItem('mz_storage_rentals')) || [];
+        const API_URL = 'https://jsonblob.com/api/jsonBlob';
+
+        let loans = [];
+        let storageRentals = [];
+        let lockedItems = {};
+        let customPrices = {};
         let currentCreditCalculation = null;
         let currentStorageCalculation = null;
         let selectedCells = new Set();
@@ -1757,12 +1759,76 @@
         let editingStorageId = null;
         let currentSafe = 1;
 
+        let dataId = '';
+
+        async function loadData() {
+            try {
+                const response = await fetch(`${API_URL}/1309293260908601344`);
+                const data = await response.json();
+                
+                loans = data.loans || [];
+                storageRentals = data.storageRentals || [];
+                lockedItems = data.lockedItems || {};
+                customPrices = data.customPrices || {};
+                
+                updateLoansTable();
+                updateStorageTable();
+                createStorageGrid();
+                loadCategory(currentCategory);
+            } catch (error) {
+                console.log('Не удалось загрузить данные, используем локальные');
+                loans = JSON.parse(localStorage.getItem('mz_loans')) || [];
+                storageRentals = JSON.parse(localStorage.getItem('mz_storage_rentals')) || [];
+                lockedItems = JSON.parse(localStorage.getItem('mz_locked_items')) || {};
+                customPrices = JSON.parse(localStorage.getItem('mz_custom_prices')) || {};
+            }
+        }
+
+        async function saveData() {
+            const data = {
+                loans,
+                storageRentals,
+                lockedItems,
+                customPrices
+            };
+
+            try {
+                if (!dataId) {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    const location = response.headers.get('Location');
+                    if (location) {
+                        dataId = location.split('/').pop();
+                    }
+                } else {
+                    await fetch(`${API_URL}/${dataId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    });
+                }
+            } catch (error) {
+                console.log('Не удалось сохранить данные в облако, сохраняем локально');
+                localStorage.setItem('mz_loans', JSON.stringify(loans));
+                localStorage.setItem('mz_storage_rentals', JSON.stringify(storageRentals));
+                localStorage.setItem('mz_locked_items', JSON.stringify(lockedItems));
+                localStorage.setItem('mz_custom_prices', JSON.stringify(customPrices));
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
         });
 
         function initializeApp() {
-            loadCategory('scrap');
+            loadData();
             setupEventListeners();
             updateTotal();
             updateSelectedItemsList();
@@ -1863,11 +1929,10 @@
             loadCategory(currentCategory);
         }
 
-        function toggleItemLock(itemId) {
+        async function toggleItemLock(itemId) {
             if (!editMode) return;
             
             lockedItems[itemId] = !lockedItems[itemId];
-            localStorage.setItem('mz_locked_items', JSON.stringify(lockedItems));
             
             if (lockedItems[itemId]) {
                 selectedItems[itemId] = 0;
@@ -1878,13 +1943,15 @@
             updateSelectedCount();
             updateSelectedItemsList();
             
+            await saveData();
+            
             const [category, index] = itemId.split('_');
             const item = itemsDatabase[category][parseInt(index)];
             const action = lockedItems[itemId] ? 'заблокирован' : 'разблокирован';
             showNotification(`Предмет "${item.name}" ${action}`, lockedItems[itemId] ? 'warning' : 'success');
         }
 
-        function editItemPrice(itemId) {
+        async function editItemPrice(itemId) {
             if (!editMode) return;
             
             const [category, index] = itemId.split('_');
@@ -1901,22 +1968,22 @@
             }
             
             customPrices[itemId] = price;
-            localStorage.setItem('mz_custom_prices', JSON.stringify(customPrices));
             
             loadCategory(currentCategory);
+            await saveData();
             showNotification(`Цена для "${item.name}" изменена на ${formatPrice(price)} руб.`, 'success');
         }
 
-        function resetItemPrice(itemId) {
+        async function resetItemPrice(itemId) {
             if (!editMode) return;
             
             const [category, index] = itemId.split('_');
             const item = itemsDatabase[category][parseInt(index)];
             
             delete customPrices[itemId];
-            localStorage.setItem('mz_custom_prices', JSON.stringify(customPrices));
             
             loadCategory(currentCategory);
+            await saveData();
             showNotification(`Цена для "${item.name}" сброшена до стандартной`, 'info');
         }
 
@@ -2501,7 +2568,7 @@
             document.getElementById('creditBreakdown').innerHTML = breakdownHTML;
         }
 
-        function createLoan() {
+        async function createLoan() {
             if (!currentCreditCalculation) {
                 alert('Сначала рассчитайте кредит!');
                 return;
@@ -2514,7 +2581,7 @@
             };
             
             loans.push(loan);
-            saveLoans();
+            await saveData();
             updateLoansTable();
             
             document.getElementById('creditPlayerName').value = '';
@@ -2555,9 +2622,9 @@
             return loan.total;
         }
 
-        function deleteLoan(loanId) {
+        async function deleteLoan(loanId) {
             loans = loans.filter(loan => loan.id !== loanId);
-            saveLoans();
+            await saveData();
             updateLoansTable();
         }
 
@@ -2759,7 +2826,7 @@
             document.getElementById('storageBreakdown').innerHTML = breakdownHTML;
         }
 
-        function createStorageRental() {
+        async function createStorageRental() {
             if (!currentStorageCalculation) {
                 alert('Сначала рассчитайте стоимость!');
                 return;
@@ -2773,7 +2840,7 @@
             };
             
             storageRentals.push(rental);
-            saveStorageRentals();
+            await saveData();
             updateStorageTable();
             createStorageGrid();
             
@@ -2807,7 +2874,7 @@
             document.getElementById('editStorageSection').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function updateStorageRental() {
+        async function updateStorageRental() {
             if (!editingStorageId) return;
             
             const rentalIndex = storageRentals.findIndex(r => r.id === editingStorageId);
@@ -2847,7 +2914,7 @@
                 totalCost
             };
             
-            saveStorageRentals();
+            await saveData();
             updateStorageTable();
             createStorageGrid();
             cancelEditStorage();
@@ -2885,9 +2952,9 @@
             });
         }
 
-        function deleteStorageRental(rentalId) {
+        async function deleteStorageRental(rentalId) {
             storageRentals = storageRentals.filter(rental => rental.id !== rentalId);
-            saveStorageRentals();
+            await saveData();
             updateStorageTable();
             createStorageGrid();
             
@@ -2901,28 +2968,20 @@
             return colors[Math.floor(Math.random() * colors.length)];
         }
 
-        function saveLoans() {
-            localStorage.setItem('mz_loans', JSON.stringify(loans));
-        }
-
-        function saveStorageRentals() {
-            localStorage.setItem('mz_storage_rentals', JSON.stringify(storageRentals));
-        }
-
-        function resetAllPrices() {
+        async function resetAllPrices() {
             if (!editMode || !confirm('Вы уверены, что хотите сбросить ВСЕ измененные цены?')) return;
             
             customPrices = {};
-            localStorage.setItem('mz_custom_prices', JSON.stringify(customPrices));
+            await saveData();
             loadCategory(currentCategory);
             showNotification('Все цены сброшены до стандартных', 'success');
         }
 
-        function unlockAllItems() {
+        async function unlockAllItems() {
             if (!editMode || !confirm('Вы уверены, что хотите разблокировать ВСЕ предметы?')) return;
             
             lockedItems = {};
-            localStorage.setItem('mz_locked_items', JSON.stringify(lockedItems));
+            await saveData();
             loadCategory(currentCategory);
             showNotification('Все предметы разблокированы', 'success');
         }
