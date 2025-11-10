@@ -994,6 +994,56 @@
             background: var(--text-secondary);
         }
         
+        .rank-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            z-index: 1000;
+            max-width: 300px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        .rank-modal h3 {
+            color: var(--text-accent);
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .rank-btn {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .rank-btn:hover {
+            background: var(--accent-color);
+        }
+
+        .close-rank-modal {
+            margin-top: 15px;
+            padding: 8px 20px;
+            background: var(--accent-color);
+            border: none;
+            border-radius: 5px;
+            color: var(--text-accent);
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
         @media (max-width: 768px) {
             .app-container {
                 padding: 5px;
@@ -1159,14 +1209,14 @@
                 <div class="total-section">
                     <div class="total-label">ОБЩАЯ СУММА</div>
                     <div class="total-amount" id="totalSum">0</div>
-                    <div class="bonus-amount" id="bonusSum" style="display: none;">+15%: 0</div>
+                    <div class="bonus-amount" id="bonusSum" style="display: none;">+0%: 0</div>
                     <div class="sale-amount" id="saleSum" style="display: none;">+30%: 0</div>
                     <div class="selected-count" id="selectedCount">Выбрано предметов: 0</div>
                 </div>
 
                 <div class="control-buttons">
                     <button class="control-btn reset" onclick="resetAll()">🔄 Сбросить всё</button>
-                    <button class="control-btn bonus" onclick="addBonus()">🎁 Добавить 15%</button>
+                    <button class="control-btn bonus" onclick="showRankModal()">🎁 Выбрать ранг</button>
                     <button class="control-btn sale" onclick="addSale()">💰 Продажа</button>
                     <button class="control-btn download" onclick="downloadList()">📥 Скачать список</button>
                 </div>
@@ -1358,6 +1408,14 @@
         </div>
     </div>
 
+    <div class="rank-modal" id="rankModal" style="display: none;">
+        <h3>Выберите ваш ранг</h3>
+        <button class="rank-btn" onclick="selectRank('assistant', 5)">Помощник (+5%)</button>
+        <button class="rank-btn" onclick="selectRank('trusted', 10)">Доверенный (+10%)</button>
+        <button class="rank-btn" onclick="selectRank('legend', 15)">Легенда (+15%)</button>
+        <button class="close-rank-modal" onclick="closeRankModal()">Закрыть</button>
+    </div>
+
     <div class="edit-controls">
         <div style="text-align: center; margin-bottom: 10px;">
             <strong style="color: var(--edit-color);">⚙️ РЕЖИМ РЕДАКТИРОВАНИЯ</strong>
@@ -1388,61 +1446,62 @@
 
         const itemsDatabase = {
             scrap: [
-                {name: "Предохранитель", price: 600.0, image: "images/scrap/fuse.png"},
-                {name: "Канифоль", price: 348.0, image: "images/scrap/rosin.jpg"},
-                {name: "Текстолит", price: 372.0, image: "images/scrap/textolit.jpg"},
-                {name: "Старая батарейка", price: 250.0, image: "images/scrap/battery_old.jpg"},
-                {name: "Неисправный дозиметр", price: 300.0, image: "images/scrap/dosimeter.jpg"},
+                {name: "Предохранитель", price: 105.0, image: "images/scrap/fuse.png"},
+                {name: "Канифоль", price: 53.0, image: "images/scrap/rosin.jpg"},
+                {name: "Текстолит", price: 79.0, image: "images/scrap/textolit.jpg"},
+                {name: "Старая батарейка", price: 53.0, image: "images/scrap/battery_old.jpg"},
+                {name: "Неисправный дозиметр", price: 53.0, image: "images/scrap/dosimeter.jpg"},
                 {name: "проводка", price: 2300.0, image: "images/scrap/wiring.jpg"},
-                {name: "Транзисторы", price: 900.0, image: "images/scrap/transistors.jpg"},
-                {name: "Конденсаторы", price: 490.0, image: "images/scrap/capacitors.jpg"},
-                {name: "Резисторы", price: 800.0, image: "images/scrap/resistors.jpg"},
+                {name: "Транзисторы", price: 79.0, image: "images/scrap/transistors.jpg"},
+                {name: "Конденсаторы", price: 53.0, image: "images/scrap/capacitors.jpg"},
+                {name: "Резисторы", price: 79.0, image: "images/scrap/resistors.jpg"},
                 {name: "Инструменты грубой работы", price: 700.0, image: "images/scrap/tools.jpg"},
-                {name: "Комплект расходников", price: 800.0, image: "images/scrap/consumables.jpg"},
+                {name: "Комплект расходников", price: 184.0, image: "images/scrap/consumables.jpg"},
                 {name: "Автомобильный аккумулятор", price: 366.0, image: "images/scrap/battery_car.jpg"},
-                {name: "Катушка с медью", price: 1800.0, image: "images/scrap/copper_coil.jpg"},
-                {name: "Клей ультра", price: 138.0, image: "images/scrap/glue_ultra.jpg"},
-                {name: "Клей момент", price: 220.0, image: "images/scrap/glue_moment.jpg"},
-                {name: "Полиуретан. клей", price: 198.0, image: "images/scrap/glue_polyurethane.jpg"},
-                {name: "прочная нить", price: 87.0, image: "images/scrap/thread.jpg"},
-				{name: "Нейлоновая нить", price: 100.0, image: "images/scrap/nylon_thread.jpg"},
-                {name: "Сверток кожи", price: 144.0, image: "images/scrap/leather_bundle.jpg"},
-                {name: "Прорезиненная ткань", price: 315.0, image: "images/scrap/rubber_fabric.jpg"},
-                {name: "Ткань армотекс", price: 199.0, image: "images/scrap/fabric_armotex.jpg"},
-                {name: "Армированная ткань", price: 177.0, image: "images/scrap/reinforced_fabric.jpg"},
-                {name: "Ткань изофлекс", price: 134.0, image: "images/scrap/fabric_isoflex.jpg"},
-                {name: "Ткань гидра 225", price: 112.0, image: "images/scrap/fabric_hydra.jpg"},
-                {name: "Ткань из брезента", price: 208.0, image: "images/scrap/fabric_tarpaulin.jpg"},
-                {name: "Клейкая лента - герметик", price: 80.0, image: "images/scrap/tape_sealant.jpg"},
-                {name: "Термостойкая клейкая лента", price: 80.0, image: "images/scrap/tape_heat.jpg"},
-                {name: "Клеевая лента", price: 98.0, image: "images/scrap/tape_glue.jpg"},
-                {name: "Армированная клейкая лента", price: 132.0, image: "images/scrap/tape_reinforced.jpg"},
-                {name: "Особопрочная клейкая лента", price: 140.0, image: "images/scrap/tape_strong.jpg"},
-                {name: "Диэлектрическая лента", price: 80.0, image: "images/scrap/tape_dielectric.jpg"},
-				{name: "Изолента", price: 224.0, image: "images/scrap/tape.jpg"},
-                {name: "Разводной ключ", price: 200.0, image: "images/scrap/wrench.png"},
-				{name: "Гаечный ключ", price: 125.0, image: "images/scrap/key.png"},
-                {name: "Клещи", price: 200.0, image: "images/scrap/pliers.jpg"},
-                {name: "Молоток", price: 125.0, image: "images/scrap/hammer.jpg"},
-                {name: "Отвертка", price: 125.0, image: "images/scrap/screwdriver.jpg"},
-                {name: "Швейцарский нож", price: 175.0, image: "images/scrap/swiss_knife.png"},
-                {name: "скальпель", price: 200.0, image: "images/scrap/skalpel.jpg"},
+                {name: "Катушка с медью", price: 131.0, image: "images/scrap/copper_coil.jpg"},
+                {name: "Клей ультра", price: 210.0, image: "images/scrap/glue_ultra.jpg"},
+                {name: "Клей момент", price: 131.0, image: "images/scrap/glue_moment.jpg"},
+                {name: "Полиуретан. клей", price: 79.0, image: "images/scrap/glue_polyurethane.jpg"},
+                {name: "прочная нить", price: 53.0, image: "images/scrap/thread.jpg"},
+		{name: "Нейлоновая нить", price: 131.0, image: "images/scrap/nylon_thread.jpg"},
+                {name: "Сверток кожи", price: 105.0, image: "images/scrap/leather_bundle.jpg"},
+                {name: "Прорезиненная ткань", price: 79.0, image: "images/scrap/rubber_fabric.jpg"},
+                {name: "Ткань армотекс", price: 184.0, image: "images/scrap/fabric_armotex.jpg"},
+                {name: "Армированная ткань", price: 131.0, image: "images/scrap/reinforced_fabric.jpg"},
+                {name: "Ткань изофлекс", price: 105.0, image: "images/scrap/fabric_isoflex.jpg"},
+                {name: "Ткань гидра 225", price: 105.0, image: "images/scrap/fabric_hydra.jpg"},
+                {name: "Ткань из брезента", price: 79.0, image: "images/scrap/fabric_tarpaulin.jpg"},
+                {name: "Клейкая лента - герметик", price: 79.0, image: "images/scrap/tape_sealant.jpg"},
+                {name: "Термостойкая клейкая лента", price: 105.0, image: "images/scrap/tape_heat.jpg"},
+                {name: "Клеевая лента", price: 79.0, image: "images/scrap/tape_glue.jpg"},
+                {name: "Армированная клейкая лента", price: 105.0, image: "images/scrap/tape_reinforced.jpg"},
+                {name: "Особопрочная клейкая лента", price: 131.0, image: "images/scrap/tape_strong.jpg"},
+                {name: "Диэлектрическая лента", price: 105.0, image: "images/scrap/tape_dielectric.jpg"},
+		{name: "Изолента", price: 105.0, image: "images/scrap/tape.jpg"},
+                {name: "Разводной ключ", price: 184.0, image: "images/scrap/wrench.png"},
+		{name: "Гаечный ключ", price: 53.0, image: "images/scrap/key.png"},
+                {name: "Клещи", price: 105.0, image: "images/scrap/pliers.jpg"},
+                {name: "Молоток", price: 53.0, image: "images/scrap/hammer.jpg"},
+                {name: "Отвертка", price: 53.0, image: "images/scrap/screwdriver.jpg"},
+                {name: "Швейцарский нож", price: 105.0, image: "images/scrap/swiss_knife.png"},
+                {name: "скальпель", price: 63.0, image: "images/scrap/skalpel.jpg"},
                 {name: "мультитул", price: 270.0, image: "images/scrap/multitool.jpg"},
-                {name: "Огнеупорное полотно", price: 180.0, image: "images/scrap/fireproof_cloth.jpg"},
+                {name: "Огнеупорное полотно", price: 158.0, image: "images/scrap/fireproof_cloth.jpg"},
                 {name: "Заводские детали", price: 900.0, image: "images/scrap/facrory_parts.jpg"},
-                {name: "Старая экипировка", price: 400.0, image: "images/scrap/old_equipment.jpg"},
-                {name: "Мотки паракорда", price: 665.0, image: "images/scrap/paracord.jpg"},
+                {name: "Старая экипировка", price: 131.0, image: "images/scrap/old_equipment.jpg"},
+                {name: "Мотки паракорда", price: 158.0, image: "images/scrap/paracord.jpg"},
                 {name: "Старые инструменты", price: 380.0, image: "images/scrap/old_tools.jpg"},
-                {name: "Защита 1 класса", price: 640.0, image: "images/scrap/protection_1.jpg"},
+                {name: "Защита 1 класса", price: 79.0, image: "images/scrap/protection_1.jpg"},
                 {name: "Боковая полимерная брониплита", price: 780.0, image: "images/scrap/armor_side_polymer.jpg"},
-                {name: "полимерная брониплита", price: 780.0, image: "images/scrap/armor_polymer.jpg"},
-                {name: "Брониплита 3 класса", price: 1200.0, image: "images/scrap/armor_3.jpg"},
-                {name: "Боковая брониплита 3 класса", price: 1100.0, image: "images/scrap/armor_side_3.jpg"},
+                {name: "полимерная брониплита", price: 79.0, image: "images/scrap/armor_polymer.jpg"},
+                {name: "Брониплита 3 класса", price: 158.0, image: "images/scrap/armor_3.jpg"},
+                {name: "Боковая бронеплита 3 класса", price: 210.0, image: "images/scrap/armor_side_3.jpg"},
                 {name: "Платы", price: 4800.0, image: "images/scrap/boards.jpg"},
                 {name: "Электромагниты", price: 3600.0, image: "images/scrap/elecrtomagnets.jpg"},
-				{name: "Легкий набор укрепления костюма", price: 1150.0, image: "images/scrap/suit_reinforcement_kit.png"},
-				{name: "Легкий набор подсумков", price: 1200.0, image: "images/scrap/pouch_kit.png"},
-				{name: "Легкий набор СИЗ", price: 1400.0, image: "images/scrap/ppe_kit.png"}
+		{name: "оруженый порох", price: 52.0, image: "images/scrap/gunpowder.png"},
+		{name: "Легкий набор укрепления костюма", price: 1150.0, image: "images/scrap/suit_reinforcement_kit.png"},
+		{name: "Легкий набор подсумков", price: 1200.0, image: "images/scrap/pouch_kit.png"},
+		{name: "Легкий набор СИЗ", price: 1400.0, image: "images/scrap/ppe_kit.png"}
             ],
             mutants: [
                 {name: "Копыто кабана", price: 134.0, image: "images/mutants/boar_hoof.png"},
@@ -1689,65 +1748,68 @@
                 {name: "Уроробос", price: 9150.0, image: "images/artifacts/ouroboros.png"}
             ],
             garbage: [
-                {name: "Руководство по выживанию", price: 70.0, image: "images/garbage/detection_guide.png"},
-                {name: "Журнал 'Основы проектирования патронов'", price: 26.0, image: "images/garbage/ammo_design_journal.png"},
-                {name: "Старая флага", price: 50.0, image: "images/garbage/flag_operation.png"},
+                {name: "Руководство по выживанию", price: 105.0, image: "images/garbage/detection_guide.png"},
+                {name: "Журнал 'Основы проектирования патронов'", price: 53.0, image: "images/garbage/ammo_design_journal.png"},
+                {name: "Старая флага", price: 79.0, image: "images/garbage/flag_operation.png"},
                 {name: "Растроенная балалайка", price: 50.0, image: "images/garbage/balalaika.png"},
                 {name: "Старая гармошка", price: 150.0, image: "images/garbage/harmonic_operation.png"},
-                {name: "Бумага", price: 40.0, image: "images/garbage/paper.png"},
+                {name: "Бумага", price: 74.0, image: "images/garbage/paper.png"},
                 {name: "Бутылка керосина", price: 45.0, image: "images/garbage/kerosene.png"},
                 {name: "Отсыревшие патроны 45 АСР", price: 40.0, image: "images/garbage/wet_45_acp.png"},
-                {name: "Отсыревшие патроны 12 каллибра", price: 40.0, image: "images/garbage/wet_12_gauge.png"},
+                {name: "Отсыревшие патроны 12 каллибра", price: 63.0, image: "images/garbage/wet_12_gauge.png"},
                 {name: "Отсыревшие патроны 9х18", price: 15.0, image: "images/garbage/wet_9x18.png"},
-				{name: "Отсыревшие патроны 5.56x45", price: 20.0, image: "images/garbage/wet_5.56x45.png"},
-				{name: "Отсыревшие патроны 7.62x25", price: 15.0, image: "images/garbage/wet_762x25.png"},
-                {name: "Порванный технический журнал", price: 45.0, image: "images/garbage/technical_journal.png"},
+		{name: "Отсыревшие патроны 5.56x45", price: 95.0, image: "images/garbage/wet_5.56x45.png"},
+		{name: "Отсыревшие патроны 7.62x25", price: 15.0, image: "images/garbage/wet_762x25.png"},
+                {name: "Порванный технический журнал", price: 79.0, image: "images/garbage/technical_journal.png"},
                 {name: "Мотоциклетные очки", price: 70.0, image: "images/garbage/glasses.png"},
-                {name: "Шахматная доска", price: 40.0, image: "images/garbage/chess_board.png"},
-                {name: "Личное фото девушки", price: 160.0, image: "images/garbage/girl_photo.png"},
-                {name: "Сверток старых газет", price: 10.0, image: "images/garbage/newspaper_bundle.png"},
-                {name: "Старая газета", price: 10.0, image: "images/garbage/newspaper_operation.png"},
+                {name: "Шахматная доска", price: 53.0, image: "images/garbage/chess_board.png"},
+                {name: "Личное фото девушки", price: 236.0, image: "images/garbage/girl_photo.png"},
+                {name: "Сверток старых газет", price: 26.0, image: "images/garbage/newspaper_bundle.png"},
+                {name: "Старая газета", price: 26.0, image: "images/garbage/newspaper_operation.png"},
                 {name: "Старые сапоги", price: 30.0, image: "images/garbage/boots.png"},
-                {name: "Ржавая зажигалка", price: 30.0, image: "images/garbage/rusty_lighter.png"},
-                {name: "Карты", price: 10.0, image: "images/garbage/cards.png"},
+                {name: "Ржавая зажигалка", price: 53.0, image: "images/garbage/rusty_lighter.png"},
+                {name: "Карты", price: 26.0, image: "images/garbage/cards.png"},
                 {name: "Серебряное ожерелье", price: 325.0, image: "images/garbage/silver_necklace.png"},
                 {name: "Канистра бензина", price: 125.0, image: "images/garbage/belkin_canister.png"},
-                {name: "Журнал Maxim", price: 125.0, image: "images/garbage/maxim_magazine.png"},
-                {name: "Журнал Playboy", price: 75.0, image: "images/garbage/playboy_magazine.png"},
-                {name: "Спальник", price: 25.0, image: "images/garbage/sleeping_bag.png"},
-				{name: "Медаль 'За отвагу'", price: 600.0, image: "images/garbage/medal_courage.png"},
-				{name: "Орден Ленина", price: 1500.0, image: "images/garbage/order_lenin.png"},
-				{name: "Орден славы", price: 1500.0, image: "images/garbage/order_glory.png"},
-				{name: "Орден отечественной войны", price: 800.0, image: "images/garbage/order_patriotic_war.png"},
-				{name: "Потёртая звезда на ленте", price: 350.0, image: "images/garbage/worn_star.png"},
-				{name: "Значок НКВД", price: 800.0, image: "images/garbage/nkvd_badge.png"},
-				{name: "Медаль 'За заслуги'", price: 250.0, image: "images/garbage/medal_merit.png"},
-				{name: "Значок 'Снайпер'", price: 800.0, image: "images/garbage/sniper_badge.png"},
-				{name: "Газовая плитка", price: 25.0, image: "images/garbage/gas_stove.png"}
+                {name: "Журнал Maxim", price: 236.0, image: "images/garbage/maxim_magazine.png"},
+                {name: "Журнал Playboy", price: 158.0, image: "images/garbage/playboy_magazine.png"},
+                {name: "Спальник", price: 53.0, image: "images/garbage/sleeping_bag.png"},
+		{name: "Медаль 'За отвагу'", price: 600.0, image: "images/garbage/medal_courage.png"},
+		{name: "Орден Ленина", price: 1500.0, image: "images/garbage/order_lenin.png"},
+		{name: "Орден славы", price: 1500.0, image: "images/garbage/order_glory.png"},
+		{name: "Орден отечественной войны", price: 800.0, image: "images/garbage/order_patriotic_war.png"},
+		{name: "Потёртая звезда на ленте", price: 350.0, image: "images/garbage/worn_star.png"},
+		{name: "Значок НКВД", price: 800.0, image: "images/garbage/nkvd_badge.png"},
+		{name: "Медаль 'За заслуги'", price: 250.0, image: "images/garbage/medal_merit.png"},
+		{name: "Значок 'Снайпер'", price: 800.0, image: "images/garbage/sniper_badge.png"},
+		{name: "Туристическая горелка", price: 150.0, image: "images/garbage/turist_fire.png"},
+		{name: "Походный матрас", price: 26.0, image: "images/garbage/turist.png"},
+		{name: "Старый фотоаппарат", price: 150.0, image: "images/garbage/old_foto.png"},
+		{name: "Газовая плита", price: 105.0, image: "images/garbage/gas_stove.png"}
             ],
             medicine: [
                 {name: "Неочищенная бутылка воды", price: 30.0, image: "images/medicine/water_bottle.png"},
-                {name: "Акватабс", price: 75.0, image: "images/medicine/aquatabs.png"},
-                {name: "Мешок с крупой", price: 85.0, image: "images/medicine/grain_bag.png"},
-                {name: "Пачка Сахара", price: 105.0, image: "images/medicine/sugar_pack.png"},
-                {name: "Короб с чаем", price: 50.0, image: "images/medicine/tea_box.png"},
-                {name: "Банка со специями", price: 75.0, image: "images/medicine/spices_jar.png"},
-                {name: "Масло для готовки", price: 75.0, image: "images/medicine/cooking_oil.png"},
+                {name: "Акватабс", price: 79.0, image: "images/medicine/aquatabs.png"},
+                {name: "Мешок с крупой", price: 84.0, image: "images/medicine/grain_bag.png"},
+                {name: "Пачка Сахара", price: 116.0, image: "images/medicine/sugar_pack.png"},
+                {name: "Короб с чаем", price: 131.0, image: "images/medicine/tea_box.png"},
+                {name: "Банка со специями", price: 95.0, image: "images/medicine/spices_jar.png"},
+                {name: "Масло для готовки", price: 236.0, image: "images/medicine/cooking_oil.png"},
                 {name: "Мясо слепого пса", price: 15.0, image: "images/medicine/blind_dog_meat.png"},
-                {name: "Банка соли", price: 40.0, image: "images/medicine/salt_jar.png"},
-                {name: "Гороховое пюре", price: 40.0, image: "images/medicine/pea_puree.png"},
+                {name: "Банка соли", price: 47.0, image: "images/medicine/salt_jar.png"},
+                {name: "Гороховое пюре", price: 53.0, image: "images/medicine/pea_puree.png"},
                 {name: "Аптечка", price: 100.0, image: "images/medicine/medkit.png"},
-                {name: "Старый бинт", price: 75.0, image: "images/medicine/old_bandage.png"},
-                {name: "Викасол", price: 80.0, image: "images/medicine/vikasol.png"},
-                {name: "Пустой блистер", price: 80.0, image: "images/medicine/empty_blister.png"},
-                {name: "Ацизол", price: 80.0, image: "images/medicine/atsizol.png"},
+                {name: "Старый бинт", price: 53.0, image: "images/medicine/old_bandage.png"},
+                {name: "Викасол", price: 63.0, image: "images/medicine/vikasol.png"},
+                {name: "Пустой блистер", price: 63.0, image: "images/medicine/empty_blister.png"},
+                {name: "Ацизол", price: 74.0, image: "images/medicine/atsizol.png"},
                 {name: "Пакет с кровью", price: 100.0, image: "images/medicine/blood_pack.png"},
-                {name: "Пустой шприц", price: 50.0, image: "images/medicine/empty_syringe.png"},
-                {name: "Пустой пакет с кровью", price: 50.0, image: "images/medicine/empty_blood_pack.png"},
-                {name: "Антисептик", price: 65.0, image: "images/medicine/antiseptic.png"},
-                {name: "Армейское обезболивающее", price: 95.0, image: "images/medicine/army_painkiller.png"},
+                {name: "Пустой шприц", price: 74.0, image: "images/medicine/empty_syringe.png"},
+                {name: "Пустой пакет для кровью", price: 126.0, image: "images/medicine/empty_blood_pack.png"},
+                {name: "Антисептик", price: 63.0, image: "images/medicine/antiseptic.png"},
+                {name: "Армейское обезболивающее", price: 116.0, image: "images/medicine/army_painkiller.png"},
                 {name: "Инъекция морфина", price: 120.0, image: "images/medicine/morphine_injection.png"},
-                {name: "Препарат E-190", price: 195.0, image: "images/medicine/e190_drug.png"}
+                {name: "Препарат E-190", price: 147.0, image: "images/medicine/e190_drug.png"}
             ]
         };
 
@@ -1771,6 +1833,8 @@
         let selectedCellsEdit = new Set();
         let editingStorageId = null;
         let currentSafe = 1;
+        let selectedRank = null;
+        let rankPercent = 0;
 
         async function loadData() {
             try {
@@ -1872,6 +1936,13 @@
             
             if (currentSearch === 'карусель') {
                 showSpecialMessage();
+                return;
+            }
+            
+            if (currentSearch === 'репутация') {
+                window.open('https://docs.google.com/spreadsheets/d/1irvrrQZqpqXt8qkYbzLu17SE49Ag0KcBPZHScFZnvAw/edit?gid=0#gid=0', '_blank');
+                document.getElementById('searchInput').value = '';
+                currentSearch = '';
                 return;
             }
             
@@ -2208,10 +2279,10 @@
                 }
             }
             
-            if (bonusApplied) {
-                const bonusTotal = total * 1.15;
+            if (selectedRank && rankPercent > 0) {
+                const bonusTotal = total * (1 + rankPercent / 100);
                 document.getElementById('totalSum').textContent = formatPrice(total);
-                document.getElementById('bonusSum').textContent = `+15%: ${formatPrice(bonusTotal)}`;
+                document.getElementById('bonusSum').textContent = `+${rankPercent}%: ${formatPrice(bonusTotal)}`;
                 document.getElementById('bonusSum').style.display = 'block';
                 document.getElementById('saleSum').style.display = 'none';
             } else if (saleApplied) {
@@ -2296,7 +2367,8 @@
             const currentTotal = calculateTotal();
             
             selectedItems = {};
-            bonusApplied = false;
+            selectedRank = null;
+            rankPercent = 0;
             saleApplied = false;
             currentSearch = '';
             document.getElementById('searchInput').value = '';
@@ -2335,15 +2407,26 @@
             });
         }
 
-        function addBonus() {
-            bonusApplied = !bonusApplied;
+        function showRankModal() {
+            document.getElementById('rankModal').style.display = 'block';
+        }
+
+        function closeRankModal() {
+            document.getElementById('rankModal').style.display = 'none';
+        }
+
+        function selectRank(rank, percent) {
+            selectedRank = rank;
+            rankPercent = percent;
             saleApplied = false;
+            closeRankModal();
             updateTotal();
         }
 
         function addSale() {
             saleApplied = !saleApplied;
-            bonusApplied = false;
+            selectedRank = null;
+            rankPercent = 0;
             updateTotal();
         }
 
@@ -2402,9 +2485,9 @@
                 fileContent += `ОБЩИЙ ИТОГ: ${totalItems} предметов\n`;
                 fileContent += `СУММА: ${formatPrice(totalValue)} руб.\n`;
                 
-                if (bonusApplied) {
-                    const bonusTotal = totalValue * 1.15;
-                    fileContent += `С БОНУСОМ 15%: ${formatPrice(bonusTotal)} руб.\n`;
+                if (selectedRank && rankPercent > 0) {
+                    const bonusTotal = totalValue * (1 + rankPercent / 100);
+                    fileContent += `С БОНУСОМ ${rankPercent}%: ${formatPrice(bonusTotal)} руб.\n`;
                 } else if (saleApplied) {
                     const saleTotal = totalValue * 1.30;
                     fileContent += `С ПРОДАЖЕЙ 30%: ${formatPrice(saleTotal)} руб.\n`;
